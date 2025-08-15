@@ -9,6 +9,13 @@
 		"ghcr.io/dhoeric/features/act:1": {},
 		"ghcr.io/va-h/devcontainers-features/uv:1": {},
 		"ghcr.io/nils-geistmann/devcontainers-features/zsh:0": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"qwtel.sqlite-viewer"
+			]
+		}
 	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
