@@ -84,7 +84,7 @@ def scrap_cardapio(html: str) -> list[RefeicaoRegistro]:
 
 if __name__ == "__main__":
     refeicao_registros = scrap_cardapio(obter_html_cardapio())
-    db_engine = sa.create_engine("sqlite:///bandeijao_usp_sao_carlos.db")
+    db_engine = sa.create_engine("sqlite:///../bandeijao_usp_sao_carlos.db")
     DataBase.metadata.create_all(db_engine)
     with Session(db_engine) as session:
         for refeicao in refeicao_registros:
