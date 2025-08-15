@@ -1,0 +1,28 @@
+name: Update University Menu
+
+on:
+  schedule:
+    - cron: "0 12 * * MON" # Runs every Monday at 12:00 UTC or 9:00 AM São Carlos time
+  workflow_dispatch: # allows manual trigger
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python+UV
+        uses: hynek/setup-cached-uv@v2
+
+      - name: Run DataBase Update
+        run: uv run main.py
+
+      - name: Commit changes 
+        uses: EndBug/add-and-commit@v9 
+        with:
+          add: 'bandeijao_usp_sao_carlos.db'
+          author_name: github-actions-bot
+          message: 'github_action_bot: updating menu database'

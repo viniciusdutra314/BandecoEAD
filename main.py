@@ -1,18 +1,39 @@
-from scheme import *
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import DateTime, String
+import datetime
+from enum import Enum
 import requests
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
 import re
 
-DIAS_DA_SEMANA = [
-    "Segunda-feira",
-    "Terça-feira",
-    "Quarta-feira",
-    "Quinta-feira",
-    "Sexta-feira",
-    "Sábado",
-    "Domingo"
-]
+
+class TipoRefeicao(str, Enum):
+    ALMOCO = "almoco"
+    JANTA = "janta"
+
+
+class DataBase(DeclarativeBase):
+    def __repr__(self):
+        attrs = []
+        for column in self.__table__.columns:
+            val = getattr(self, column.name)
+            attrs.append(f"{column.name}={val!r}")
+        return f"<{self.__class__.__name__}({', '.join(attrs)})>"
+
+
+class RefeicaoRegistro(DataBase):
+    __tablename__ = "cardapios"
+    data_refeicao: Mapped[datetime.date] = mapped_column(
+        DateTime, primary_key=True)
+    tipo_refeicao: Mapped[TipoRefeicao] = mapped_column(
+        String(6), primary_key=True)
+    principal: Mapped[str] = mapped_column(String(100), nullable=False)
+    vegetariano: Mapped[str] = mapped_column(String(100), nullable=False)
+    guarnicao: Mapped[str] = mapped_column(String(100), nullable=False)
+    sobremesa_opcao1: Mapped[str] = mapped_column(String(100), nullable=False)
+    sobremesa_opcao2: Mapped[str] = mapped_column(String(100), nullable=False)
+
 
 def obter_html_cardapio() -> str:
     resp = requests.get("https://www.puspsc.usp.br/cardapio/")
@@ -21,8 +42,16 @@ def obter_html_cardapio() -> str:
     return resp.text
 
 
-
-def scrap_cardapio(html:str) -> list[RefeicaoRegistro]:
+def scrap_cardapio(html: str) -> list[RefeicaoRegistro]:
+    DIAS_DA_SEMANA = [
+        "Segunda-feira",
+        "Terça-feira",
+        "Quarta-feira",
+        "Quinta-feira",
+        "Sexta-feira",
+        "Sábado",
+        "Domingo"
+    ]
     match_data_inicial = re.findall(
         r"\d{2}/\d{2}/\d{4}\s*a\s*\d{2}/\d{2}/\d{4}", html)
     data_inicio = datetime.datetime.strptime(
@@ -41,7 +70,7 @@ def scrap_cardapio(html:str) -> list[RefeicaoRegistro]:
                     "Sobremesa: ", "").rsplit(r"/", 1)
                 refeicao_registros.append(RefeicaoRegistro(
                     data_refeicao=data_refeicao,
-                    tipo_refeicao=TipoRefeicao.ALMOCO if index == 0 else TipoRefeicao.JANTAR,
+                    tipo_refeicao=TipoRefeicao.ALMOCO if index == 0 else TipoRefeicao.JANTA,
                     principal=tabela[0],
                     vegetariano=tabela[1].replace(
                         "Opção do Prato Principal: ", ""),
@@ -52,17 +81,13 @@ def scrap_cardapio(html:str) -> list[RefeicaoRegistro]:
 
     return refeicao_registros
 
+
 if __name__ == "__main__":
     refeicao_registros = scrap_cardapio(obter_html_cardapio())
-    db_engine=sa.create_engine("sqlite:///bandeijao_usp_sao_carlos.db")
+    db_engine = sa.create_engine("sqlite:///bandeijao_usp_sao_carlos.db")
     DataBase.metadata.create_all(db_engine)
     with Session(db_engine) as session:
-        try:
-            for refeicao in refeicao_registros:
+        for refeicao in refeicao_registros:
                 session.add(refeicao)
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            print(f"Erro ao salvar no banco de dados: {e}")
-            raise
-    print("Cardápio atualizado com sucesso!")
+        session.commit()
+        print("Cardápio atualizado com sucesso!")
