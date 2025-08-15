@@ -13,7 +13,8 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"qwtel.sqlite-viewer"
+				"qwtel.sqlite-viewer",
+				"yzhang.markdown-all-in-one"
 			]
 		}
 	}
