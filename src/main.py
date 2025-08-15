@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import DateTime, String
+from sqlalchemy import String,Date,Text
 import datetime
 from enum import Enum
 import requests
@@ -21,11 +21,10 @@ class DataBase(DeclarativeBase):
             attrs.append(f"{column.name}={val!r}")
         return f"<{self.__class__.__name__}({', '.join(attrs)})>"
 
-
 class RefeicaoRegistro(DataBase):
     __tablename__ = "cardapios"
     data_refeicao: Mapped[datetime.date] = mapped_column(
-        DateTime, primary_key=True)
+        Date, primary_key=True)
     tipo_refeicao: Mapped[TipoRefeicao] = mapped_column(
         String(6), primary_key=True)
     principal: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -33,6 +32,15 @@ class RefeicaoRegistro(DataBase):
     guarnicao: Mapped[str] = mapped_column(String(100), nullable=False)
     sobremesa_opcao1: Mapped[str] = mapped_column(String(100), nullable=False)
     sobremesa_opcao2: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    def __str__(self) -> str:
+        texto=""
+        texto += f"Prato Principal: {self.principal}\n"
+        texto += f"Opção Vegetariana: {self.vegetariano}\n"
+        texto += f"Guarnição: {self.guarnicao}\n"
+        texto += f"Sobremesa 1: {self.sobremesa_opcao1}\n"
+        texto += f"Sobremesa 2: {self.sobremesa_opcao2}\n"
+        return texto
 
 
 def obter_html_cardapio() -> str:
@@ -61,9 +69,10 @@ def scrap_cardapio(html: str) -> list[RefeicaoRegistro]:
         data_refeicao = data_inicio + datetime.timedelta(days=offset)
         padrao = rf"{dia}.*?Mini Pão e Suco</td>\n</tr>"
         matches = re.findall(padrao, html, flags=re.DOTALL)
-        if matches:
+        raw_data = matches[0] if matches else ""
+        if raw_data:
             submatches = re.findall(
-                r"Saladas: Diversas.*?Mini Pão e Suco", matches[0], flags=re.DOTALL)
+                r"Saladas: Diversas.*?Mini Pão e Suco", raw_data, flags=re.DOTALL)
             for index, submatch in enumerate(submatches):
                 tabela = submatch.replace("\n", "").split("<br />")[1:-1]
                 sobremesa_a, sobremesa_b = tabela[-1].replace(
@@ -76,9 +85,9 @@ def scrap_cardapio(html: str) -> list[RefeicaoRegistro]:
                         "Opção do Prato Principal: ", ""),
                     guarnicao=tabela[2],
                     sobremesa_opcao1=sobremesa_a,
-                    sobremesa_opcao2=sobremesa_b
+                    sobremesa_opcao2=sobremesa_b,
                 ))
-
+    breakpoint()
     return refeicao_registros
 
 
