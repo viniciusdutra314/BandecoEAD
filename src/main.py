@@ -23,10 +23,8 @@ class DataBase(DeclarativeBase):
 
 class RefeicaoRegistro(DataBase):
     __tablename__ = "cardapios"
-    data_refeicao: Mapped[datetime.date] = mapped_column(
-        Date, primary_key=True)
-    tipo_refeicao: Mapped[TipoRefeicao] = mapped_column(
-        String(6), primary_key=True)
+    data_refeicao: Mapped[datetime.date] = mapped_column(Date, primary_key=True)
+    tipo_refeicao: Mapped[TipoRefeicao] = mapped_column(String(6), primary_key=True)
     principal: Mapped[str] = mapped_column(String(100), nullable=False)
     vegetariano: Mapped[str] = mapped_column(String(100), nullable=False)
     guarnicao: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -87,7 +85,6 @@ def scrap_cardapio(html: str) -> list[RefeicaoRegistro]:
                     sobremesa_opcao1=sobremesa_a,
                     sobremesa_opcao2=sobremesa_b,
                 ))
-    breakpoint()
     return refeicao_registros
 
 

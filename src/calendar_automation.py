@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from main import RefeicaoRegistro, TipoRefeicao
+from gcsa.google_calendar import GoogleCalendar
+from gcsa.event import Event
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
 import datetime
@@ -44,10 +46,10 @@ class AbstractCalendar(ABC):
         pass
 
     @abstractmethod
-    def add_event(self, event: RefeicaoRegistro)->None:
+    def add_event(self, refeicao: RefeicaoRegistro)->None:
         pass
 
-class GoogleCalendar(AbstractCalendar):
+class GoogleCalendarImplementation(AbstractCalendar):
     """Google Calendar integration class.
     This class implements the methods to add events to a Google Calendar.
     
@@ -57,11 +59,17 @@ class GoogleCalendar(AbstractCalendar):
     """
     
     def __init__(self, API_KEY: str, color: str = "red"):
+        GoogleCalendar(credentials_path="client_secret.json")
+        breakpoint()
         self.API_KEY = API_KEY
         self.color = color
 
-    def add_event(self, event: RefeicaoRegistro) -> None:
-        pass
+    def add_event(self, refeicao: RefeicaoRegistro) -> None:
+        new_event=Event(summary=f"{refeicao.principal} / {refeicao.vegetariano}",
+                start=refeicao.data_refeicao,
+                end=refeicao.data_refeicao + calendar.event_length,
+                description=str(refeicao),
+                color_id=calendar.color)
 
 if __name__ == "__main__":
     db_engine = sa.create_engine("sqlite:///../bandeijao_usp_sao_carlos.db") 
@@ -69,7 +77,8 @@ if __name__ == "__main__":
         filter_data = datetime.date.today()
         refeicoes = session.query(RefeicaoRegistro).filter(
             RefeicaoRegistro.data_refeicao >= filter_data).all()
-        calendar=GoogleCalendar("iaehgea")
+        calendar = GoogleCalendarImplementation("313")
         for refeicao in refeicoes:
+
             calendar.add_event(refeicao)
             print(refeicao)
